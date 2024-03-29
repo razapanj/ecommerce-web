@@ -17,7 +17,7 @@ class Users(SQLModel):
         return self.user_id
 
     
-class UserSignup(Users):
+class LoginSignUp(Users,table = True):
     first_name:str = Field(nullable=False)
     last_name:str = Field(nullable=False) 
     email:str = Field(index=True,nullable=False,unique=True)
@@ -36,8 +36,23 @@ class UserSignup(Users):
         else:
             return False
         
-class UserLogin(Users):
-    login_time:datetime = Field(default_factory=datetime.now()) 
+    def check_user_role(self):
+        if (self.role == "admin"):
+            print("you are admin")
+            return True
+        else:
+            print("you are user")
+            return False
+
+        
+class LoginUsers(Users,table = True):
+    login_id:Optional[int] = Field(primary_key=True,default=None) 
+    login_at:datetime = Field(default_factory=datetime.now())
+    logged_in:bool = Field(default=False)
+
+    def check_user_is_login(self):
+        return self.logged_in 
+    
 
 
     
