@@ -22,21 +22,21 @@ class LoginSignUp(Users,table = True):
     last_name:str = Field(nullable=False) 
     email:str = Field(index=True,nullable=False,unique=True)
     created_at:datetime = Field(default_factory=datetime.now())
-    confirm_password = Field(nullable=False)
+    confirm_password:str = Field(nullable=False)
 
-    def get_user_fullname(self):
+    def get_user_fullname(self) -> str:
         return f"The user fullname is ${self.first_name} ${self.last_name}"
     
-    def get_user_email(self):
+    def get_user_email(self) -> str:
         return self.email
     
-    def check_password_matches(self):
+    def check_password_matches(self) -> bool:
         if(self.password == self.confirm_password):
             return True
         else:
             return False
         
-    def check_user_role(self):
+    def check_user_role(self) -> bool:
         if (self.role == "admin"):
             print("you are admin")
             return True
@@ -50,9 +50,10 @@ class LoginUsers(Users,table = True):
     login_at:datetime = Field(default_factory=datetime.now())
     logged_in:bool = Field(default=False)
 
-    def check_user_is_login(self):
+    def check_user_is_login(self) -> bool:
         return self.logged_in 
-    
+
+
 
 
     
