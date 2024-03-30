@@ -21,3 +21,4 @@ def test_create_all_tables():
 def test_drop_all_tables():
     SQLModel.metadata.drop_all(engine)
     return "Tables dropped"
+

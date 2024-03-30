@@ -4,20 +4,19 @@ from datetime import datetime
 from enum import Enum
 
 class UserRole(str,Enum):
-    admin = "admin"
-    user = "user"
+    admin:str = "admin"
+    user:str = "user"
 
 class User(SQLModel):
-    user_id:Optional[int] = Field(primary_key=True,default=None)
     user_name:str = Field(nullable=False,index=True,unique=True) 
     password:str = Field(nullable=False)
     role: UserRole
      
-    def get_user_id(self):
-        return self.user_id
+    
 
     
 class SignUpUser(User,table = True):
+    signup_user_id:Optional[int] = Field(primary_key=True,default=None)
     first_name:str = Field(nullable=False)
     last_name:str = Field(nullable=False) 
     email:str = Field(index=True,nullable=False,unique=True)
@@ -45,7 +44,8 @@ class SignUpUser(User,table = True):
             return False
 
         
-class LoginUsers(User,table = True):
+class LoginUser(User,table = True):
+    login_user_id:int | None = Field(primary_key=True,default=None)
     login_at:datetime = Field(default_factory=datetime.now)
     logged_in:bool = Field(default=False)
 
@@ -53,14 +53,14 @@ class LoginUsers(User,table = True):
         return self.logged_in 
     
 class Size(str,Enum):
-    LARGE = "large"
-    SMALL = "small"
-    MEDIUM = "medium"
-    EXTRALARGE = "extralarge"
-    EXTRAEXTRALARGE = "extraextralarge"
+    LARGE:str = "large"
+    SMALL:str = "small"
+    MEDIUM:str = "medium"
+    EXTRALARGE:str = "extralarge"
+    EXTRAEXTRALARGE:str = "extraextralarge"
 
-class Product(SQLModel):
-    product_id:Optional[int] = Field(primary_key=True,default=None)
+class Product(SQLModel,table=True):
+    product_id:int | None = Field(primary_key=True,default=None)
     product_name:str = Field(index=True,unique=True)
     product_description:str
     product_price:int = Field(index=True)
@@ -69,84 +69,84 @@ class Product(SQLModel):
     product_size:Size
     
 
-class Image(SQLModel):
-    image_id:Optional[int] = Field(primary_key=True,default=None)
+class ProductCart(SQLModel,table = True):
+    cart_product_id:int | None = Field(primary_key=True,default=None)
+    user_id:int | None = Field(foreign_key="loginuser.login_user_id",default=None)
+    product_id:int | None = Field(foreign_key="product.product_id",default=None) 
+
+class Image(SQLModel,table=True):
+    image_id:int | None = Field(primary_key=True,default=None)
     file_name:str
     data:bytes 
-    product_id:int = Field(foreign_key="product.product_id",index=True)
+    product_id:int | None = Field(foreign_key="product.product_id",index=True,default=None)
 
-
-class ProductAll(Product,table = True):
-    pass
-
-class ProductCart(Product,table = True):
-    pass
 
 class Category(SQLModel,table=True):
     category_id:int | None = Field(primary_key=True,default=None)
     category_name:str = Field(index=True)
     category_description:str
-    product_id:int | None = Field(foreign_key="product.product_id")
+    product_id:int | None = Field(foreign_key="product.product_id",default=None)
     
 
 class CategoryProductAssociation(SQLModel,table = True):
-    category_id:int | None = Field(foreign_key="category.category_id")
-    product_id:int | None = Field(foreign_key="product.product_id") 
+    category_id:int | None = Field(primary_key=True,foreign_key="category.category_id",default=None)
+    product_id:int | None = Field(primary_key=True,foreign_key="product.product_id",default=None) 
 
-class OrderStatus(SQLModel):
-    PENDING = "pending"
-    SUCCESS = "success"
-    DELIVERED = "delivered"
+class OrderStatus(str,Enum):
+    PENDING:str = "pending"
+    SUCCESS:str = "success"
+    DELIVERED:str = "delivered"
 
-class Order(SQLModel):
+class Order(SQLModel,table = True):
     order_id:int | None = Field(primary_key=True,default=None)
     order_date:datetime = Field(default_factory=datetime.now)
     order_status:OrderStatus
-    user_id:int | None = Field(foreign_key="user.user_id")
+    user_id:int | None = Field(foreign_key="loginuser.login_user_id")
 
-class OrderItem(SQLModel):
+class OrderItem(SQLModel,table = True):
     order_item_id:int | None = Field(primary_key=True,default=None)
     order_quantity:int
     order_price:int
     order_subtotal:int
-    product_id:int | None = Field(foreign_key="product.product_id")
-    order_id:int | None = Field(foreign_key="order.order_id")
+    product_id:int | None = Field(foreign_key="product.product_id",default=None)
+    order_id:int | None = Field(foreign_key="order.order_id",default=None)
 
 
 class Rating(int,Enum):
-    ONE_STAR = 1
-    TWO_STAR = 2
-    THREE_STAR = 3
-    FOUR_STAR = 4
-    FIVE_STAR = 5
+    ONE_STAR:int = 1
+    TWO_STAR:int = 2
+    THREE_STAR:int = 3
+    FOUR_STAR:int = 4
+    FIVE_STAR:int = 5
 
 
 class Review(SQLModel,table=True):
     review_id:int | None = Field(primary_key=True,default=None)
     review_comment:str
     review_date:datetime = Field(default_factory=datetime.now)
-    product_id:int | None = Field(foreign_key="product.product_id")
-    user_id:int | None = Field(foreign_key="user.user_id")
+    product_id:int | None = Field(foreign_key="product.product_id",default=None)
+    user_id:int | None = Field(foreign_key="loginuser.login_user_id",default=None)
     review_rating:Rating
 
 
 class Address(SQLModel):
     address_id:int | None = Field(primary_key=True,default=None)
     address_name :str = Field(index=True)
-    user_id:int | None = Field(foreign_key="user.user_id")
-    order_id:int | None = Field(foreign_key="order.order_id")
+    user_id:int | None = Field(foreign_key="loginuser.login_user_id",default=None)
+    order_id:int | None = Field(foreign_key="order.order_id",default=None)
 
 class PaymentMethod(str,Enum):
-    COD = "cash on delivery"
+    COD:str = "cash on delivery"
 
-class Payment(SQLModel):
+class Payment(SQLModel,table = True):
     payment_id:int | None = Field(primary_key=True,default=None)
     payment_method:PaymentMethod
-    order_id:int | None = Field(foreign_key="order.order_id")
-    user_id:int | None = Field(foreign_key="user.user_id")
+    order_id:int | None = Field(foreign_key="order.order_id",default=None)
+    user_id:int | None = Field(foreign_key="loginuser.login_user_id",default=None)
 
-class OrderHistory(SQLModel):
-    order_id:int | None = Field(foreign_key="order.order_id")
-    user_id:int | None = Field(foreign_key="user.user_id")
+class OrderHistory(SQLModel,table = True):
+    order_history_id:int | None =  Field(primary_key=True,default=None)
+    order_id:int | None = Field(foreign_key="order.order_id",default=None)
+    user_id:int | None = Field(foreign_key="loginuser.login_user_id",default=None)
     order_date:datetime = Field(default_factory=datetime.now)
     order_status:OrderStatus 
