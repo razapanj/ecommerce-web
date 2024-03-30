@@ -53,14 +53,34 @@ class LoginUsers(Users,table = True):
     def check_user_is_login(self) -> bool:
         return self.logged_in 
     
+class Size(str,Enum):
+    LARGE = "large"
+    SMALL = "small"
+    MEDIUM = "medium"
+    EXTRALARGE = "extralarge"
+    EXTRAEXTRALARGE = "extraextralarge"
+
 class Product(SQLModel):
     product_id:Optional[int] = Field(primary_key=True,default=None)
     product_name:str = Field(index=True,unique=True)
     product_description:str
     product_price:int = Field(index=True)
-    
+    product_slug:str = Field(index=True)
+    product_quantity:int
+    product_size:Size
+
+class Image():
+    image_id:Optional[int] = Field(primary_key=True,default=None)
+    file_name:str
+    data:bytes 
+    product_id:int = Field(foreign_key="product.product_id",index=True)
 
 
+class ProductAll(Product):
+    pass
+
+class ProductCart(Product):
+    pass
 
 
     
