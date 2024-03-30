@@ -52,6 +52,13 @@ class LoginUsers(Users,table = True):
 
     def check_user_is_login(self) -> bool:
         return self.logged_in 
+    
+class Product(SQLModel):
+    product_id:Optional[int] = Field(primary_key=True,default=None)
+    product_name:str = Field(index=True,unique=True)
+    product_description:str
+    product_price:int = Field(index=True)
+    
 
 
 
