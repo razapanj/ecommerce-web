@@ -136,5 +136,17 @@ class Address(SQLModel):
     user_id:int | None = Field(foreign_key="user.user_id")
     order_id:int | None = Field(foreign_key="order.order_id")
 
+class PaymentMethod(str,Enum):
+    COD = "cash on delivery"
+
 class Payment(SQLModel):
-    pass
+    payment_id:int | None = Field(primary_key=True,default=None)
+    payment_method:PaymentMethod
+    order_id:int | None = Field(foreign_key="order.order_id")
+    user_id:int | None = Field(foreign_key="user.user_id")
+
+class OrderHistory(SQLModel):
+    order_id:int | None = Field(foreign_key="order.order_id")
+    user_id:int | None = Field(foreign_key="user.user_id")
+    order_date:datetime = Field(default_factory=datetime.now)
+    order_status:OrderStatus 
