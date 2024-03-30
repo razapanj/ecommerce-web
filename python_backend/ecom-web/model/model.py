@@ -7,7 +7,7 @@ class UserRole(str,Enum):
     admin = "admin"
     user = "user"
 
-class Users(SQLModel):
+class User(SQLModel):
     user_id:Optional[int] = Field(primary_key=True,default=None)
     user_name:str = Field(nullable=False,index=True,unique=True) 
     password:str = Field(nullable=False)
@@ -17,11 +17,11 @@ class Users(SQLModel):
         return self.user_id
 
     
-class LoginSignUp(Users,table = True):
+class SignUpUser(User,table = True):
     first_name:str = Field(nullable=False)
     last_name:str = Field(nullable=False) 
     email:str = Field(index=True,nullable=False,unique=True)
-    created_at:datetime = Field(default_factory=datetime.now())
+    created_at:datetime = Field(default_factory=datetime.now)
     confirm_password:str = Field(nullable=False)
 
     def get_user_fullname(self) -> str:
@@ -37,7 +37,7 @@ class LoginSignUp(Users,table = True):
             return False
         
     def check_user_role(self) -> bool:
-        if (self.role == "admin"):
+        if (self.role == UserRole.admin):
             print("you are admin")
             return True
         else:
@@ -45,9 +45,8 @@ class LoginSignUp(Users,table = True):
             return False
 
         
-class LoginUsers(Users,table = True):
-    login_id:Optional[int] = Field(primary_key=True,default=None) 
-    login_at:datetime = Field(default_factory=datetime.now())
+class LoginUsers(User,table = True):
+    login_at:datetime = Field(default_factory=datetime.now)
     logged_in:bool = Field(default=False)
 
     def check_user_is_login(self) -> bool:
@@ -68,20 +67,74 @@ class Product(SQLModel):
     product_slug:str = Field(index=True)
     product_quantity:int
     product_size:Size
+    
 
-class Image():
+class Image(SQLModel):
     image_id:Optional[int] = Field(primary_key=True,default=None)
     file_name:str
     data:bytes 
     product_id:int = Field(foreign_key="product.product_id",index=True)
 
 
-class ProductAll(Product):
+class ProductAll(Product,table = True):
     pass
 
-class ProductCart(Product):
+class ProductCart(Product,table = True):
     pass
 
-
+class Category(SQLModel,table=True):
+    category_id:int | None = Field(primary_key=True,default=None)
+    category_name:str = Field(index=True)
+    category_description:str
+    product_id:int | None = Field(foreign_key="product.product_id")
     
 
+class CategoryProductAssociation(SQLModel,table = True):
+    category_id:int | None = Field(foreign_key="category.category_id")
+    product_id:int | None = Field(foreign_key="product.product_id") 
+
+class OrderStatus(SQLModel):
+    PENDING = "pending"
+    SUCCESS = "success"
+    DELIVERED = "delivered"
+
+class Order(SQLModel):
+    order_id:int | None = Field(primary_key=True,default=None)
+    order_date:datetime = Field(default_factory=datetime.now)
+    order_status:OrderStatus
+    user_id:int | None = Field(foreign_key="user.user_id")
+
+class OrderItem(SQLModel):
+    order_item_id:int | None = Field(primary_key=True,default=None)
+    order_quantity:int
+    order_price:int
+    order_subtotal:int
+    product_id:int | None = Field(foreign_key="product.product_id")
+    order_id:int | None = Field(foreign_key="order.order_id")
+
+
+class Rating(int,Enum):
+    ONE_STAR = 1
+    TWO_STAR = 2
+    THREE_STAR = 3
+    FOUR_STAR = 4
+    FIVE_STAR = 5
+
+
+class Review(SQLModel,table=True):
+    review_id:int | None = Field(primary_key=True,default=None)
+    review_comment:str
+    review_date:datetime = Field(default_factory=datetime.now)
+    product_id:int | None = Field(foreign_key="product.product_id")
+    user_id:int | None = Field(foreign_key="user.user_id")
+    review_rating:Rating
+
+
+class Address(SQLModel):
+    address_id:int | None = Field(primary_key=True,default=None)
+    address_name :str = Field(index=True)
+    user_id:int | None = Field(foreign_key="user.user_id")
+    order_id:int | None = Field(foreign_key="order.order_id")
+
+class Payment(SQLModel):
+    pass
