@@ -1,24 +1,24 @@
-import os
+import os 
 from dotenv import find_dotenv,load_dotenv
+from ecomweb.model.model import *
 from sqlmodel import create_engine,Session,SQLModel
+from ecomweb.settings.setting import DATABASE_URL
 
-load_dotenv(find_dotenv())
-
-TEST_DATABASE_URL = os.environ["TEST_DATABASE_URL"]
-engine = create_engine(TEST_DATABASE_URL,echo=True)
+conn_str = str(DATABASE_URL)
+engine = create_engine(conn_str,echo=True)
 
 
-def get_test_session():
+def get_session():
     with Session(engine) as session:
         yield session 
 
-
-def test_create_all_tables():
+def create_all_tables():
     SQLModel.metadata.create_all(engine)
-    return "Tables created"
+    
 
 
-def test_drop_all_tables():
+def drop_all_tables():
     SQLModel.metadata.drop_all(engine)
     return "Tables dropped"
+
 

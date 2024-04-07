@@ -7,24 +7,25 @@ class UserRole(str,Enum):
     admin:str = "admin"
     user:str = "user"
 
-class User(SQLModel):
-    user_name:str = Field(nullable=False,index=True,unique=True) 
+class UserBase(SQLModel):
+    username:str = Field(nullable=False,index=True,unique=True) 
     password:str = Field(nullable=False)
     role: UserRole
-     
     
-
-    
-class SignUpUser(User,table = True):
-    signup_user_id:Optional[int] = Field(primary_key=True,default=None)
-    first_name:str = Field(nullable=False)
-    last_name:str = Field(nullable=False) 
+class UserCreate(UserBase):
+    firstname:str = Field(nullable=False)
+    lastname:str = Field(nullable=False) 
     email:str = Field(index=True,nullable=False,unique=True)
     created_at:datetime = Field(default_factory=datetime.now)
     confirm_password:str = Field(nullable=False)
+    logged_in:bool = Field(default=False)
 
+
+class User(UserCreate, table = True):
+    user_id:int | None = Field(primary_key=True, default=None)
+    
     def get_user_fullname(self) -> str:
-        return f"The user fullname is ${self.first_name} ${self.last_name}"
+        return f"The user fullname is ${self.firstname} ${self.lastname}"
     
     def get_user_email(self) -> str:
         return self.email
@@ -44,13 +45,18 @@ class SignUpUser(User,table = True):
             return False
 
         
-class LoginUser(User,table = True):
-    login_user_id:int | None = Field(primary_key=True,default=None)
+class UserLogin(UserBase):
     login_at:datetime = Field(default_factory=datetime.now)
     logged_in:bool = Field(default=False)
 
-    def check_user_is_login(self) -> bool:
-        return self.logged_in 
+    
+
+class UserRead(SQLModel):
+    id:int
+    username:str
+    email:str
+    created_at:datetime
+    
     
 class Size(str,Enum):
     LARGE:str = "large"
@@ -150,3 +156,4 @@ class OrderHistory(SQLModel,table = True):
     user_id:int | None = Field(foreign_key="loginuser.login_user_id",default=None)
     order_date:datetime = Field(default_factory=datetime.now)
     order_status:OrderStatus 
+
