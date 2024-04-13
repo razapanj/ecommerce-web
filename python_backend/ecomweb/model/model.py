@@ -112,6 +112,22 @@ class Category(SQLModel,table=True):
     category_name:str = Field(index=True)
     category_description:str
     
+class CategoryCreate(SQLModel):
+    category_name:str
+    category_description:str
+
+class CategoryRead(Category):
+    pass
+
+class SubCategories(SQLModel,table=True):
+    sub_categories_id:int | None = Field(primary_key=True,default=None)
+    sub_category_name:str = Field(index =True)
+    category_id:int | None = Field(foreign_key="category.category_id",default=None)
+
+class SubSubCategory(SQLModel, table=True):
+    sub_sub_category_id:int | None = Field(primary_key=True, default=None)
+    sub_sub_category_name:str = Field(index=True)
+    sub_categories_id:int | None = Field(foreign_key="sub_categories.sub_categories_id", default=None)
 
 class CategoryProductAssociation(SQLModel,table = True):
     category_id:int | None = Field(primary_key=True,foreign_key="category.category_id",default=None)

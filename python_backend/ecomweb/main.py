@@ -116,4 +116,8 @@ def get_products(session:Annotated[Session, Depends(get_session)]):
     product = get_all_products(session)
     return product
 
-
+@app.post("/createcategory",response_model=CategoryRead)
+def create_category(session:Annotated[Session,Depends(get_session)],category_data:CategoryCreate):
+    category_info = Category.model_validate(category_data)
+    category = service_create_category(session, category_info)
+    return category

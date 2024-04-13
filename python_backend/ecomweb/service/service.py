@@ -269,3 +269,15 @@ def get_image(session:Session, product_id:int) -> list[Image]:
     images = session.exec(select(Image).where(Image.product_id == product_id)).all()
     
     return images
+
+def service_create_category(session:Session,category:Category) -> Category:
+    """
+    
+    """
+    existing_category = session.exec(select(Category).where(Category.category_name == category.category_name)).first()
+    if existing_category:
+        return None
+    session.add(category)
+    session.commit()
+    session.refresh(category)
+    return category
