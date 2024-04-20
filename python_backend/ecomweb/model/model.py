@@ -1,4 +1,5 @@
 from sqlmodel import Field,SQLModel
+from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime,timedelta
 from enum import Enum
@@ -124,13 +125,16 @@ class SubCategories(SQLModel,table=True):
     sub_category_name:str = Field(index =True)
     category_id:int | None = Field(foreign_key="category.category_id",default=None)
 
-class SubSubCategory(SQLModel, table=True):
-    sub_sub_category_id:int | None = Field(primary_key=True, default=None)
-    sub_sub_category_name:str = Field(index=True)
-    sub_categories_id:int | None = Field(foreign_key="sub_categories.sub_categories_id", default=None)
+class SubCategoryCreate(SQLModel):
+    sub_category_name:str
+
+class SubCategoryRead(SubCategories):
+    pass
+
+
 
 class CategoryProductAssociation(SQLModel,table = True):
-    category_id:int | None = Field(primary_key=True,foreign_key="category.category_id",default=None)
+    sub_categories_id:int | None = Field(primary_key=True,foreign_key="subcategories.sub_categories_id",default=None)
     product_id:int | None = Field(primary_key=True,foreign_key="product.product_id",default=None) 
 
 class OrderStatus(str,Enum):
@@ -144,6 +148,13 @@ class Order(SQLModel,table = True):
     order_status:OrderStatus
     user_id:int | None = Field(foreign_key="user.user_id")
 
+class OrderCreate(SQLModel):
+    order_status:OrderStatus
+    user_id:int
+
+class OrderRead(Order):
+    pass
+
 class OrderItem(SQLModel,table = True):
     order_item_id:int | None = Field(primary_key=True,default=None)
     order_quantity:int
@@ -151,6 +162,17 @@ class OrderItem(SQLModel,table = True):
     order_subtotal:int
     product_id:int | None = Field(foreign_key="product.product_id",default=None)
     order_id:int | None = Field(foreign_key="order.order_id",default=None)
+
+class OrderItemCreate(SQLModel):
+    order_quantity:int
+    order_price:int
+    order_subtotal:int
+    product_id:int
+    order_id:int
+
+class OrderItemRead(OrderItem):
+    pass
+
 
 
 class Rating(int,Enum):
@@ -185,12 +207,6 @@ class Payment(SQLModel,table = True):
     order_id:int | None = Field(foreign_key="order.order_id",default=None)
     user_id:int | None = Field(foreign_key="user.user_id",default=None)
 
-class OrderHistory(SQLModel,table = True):
-    order_history_id:int | None =  Field(primary_key=True,default=None)
-    order_id:int | None = Field(foreign_key="order.order_id",default=None)
-    user_id:int | None = Field(foreign_key="user.user_id",default=None)
-    order_date:datetime = Field(default_factory=datetime.now)
-    order_status:OrderStatus 
 
 class Token(SQLModel):
     access_token:str

@@ -121,3 +121,16 @@ def create_category(session:Annotated[Session,Depends(get_session)],category_dat
     category_info = Category.model_validate(category_data)
     category = service_create_category(session, category_info)
     return category
+
+@app.post("/addsubcategory",response_model=SubCategoryRead)
+def add_sub_category(session:Annotated[Session, Depends(get_session)],category_id:int, sub_category_data:SubCategoryCreate):
+    sub_category_info = SubCategories.model_validate(sub_category_data)
+    sub_category = service_create_sub_category(session, sub_category_info)
+    return sub_category
+
+@app.post("/createorder",response_model=OrderRead)
+def create_order(order_data:OrderCreate,session:Session = Depends(get_session),user:User = Depends(get_current_user)) -> OrderRead:
+    order_data.user_id = user.user_id
+    order_info = Order.model_validate(order_data)
+    order = service_create_order(session, order_info,user)
+    return order

@@ -5,7 +5,7 @@ from fastapi.security import OAuth2PasswordBearer,OAuth2PasswordRequestForm
 from ecomweb.settings.setting import ACCESS_TOKEN_EXPIRE_MINUTES,ALGORITHM,SECRET_KEY
 from jose import jwt,JWTError
 from passlib.context import CryptContext
-from typing import Annotated
+from typing import Annotated,Any
 from datetime import datetime, timedelta,timezone
 # Services for user
 pwd_context = CryptContext(schemes=['bcrypt'], deprecated="auto")
@@ -256,7 +256,7 @@ def product_add(session:Session, product:Product):
     """
     existing_product = session.exec(select(Product).where(Product.product_name == product.product_name)).first()
     if existing_product:
-        return None
+        raise HTTPException(status_code=404, detail="product is already present!")
     session.add(product)
     session.commit()
     session.refresh(product)
@@ -276,8 +276,29 @@ def service_create_category(session:Session,category:Category) -> Category:
     """
     existing_category = session.exec(select(Category).where(Category.category_name == category.category_name)).first()
     if existing_category:
-        return None
+        raise HTTPException(status_code=404, detail="category is already present!")
     session.add(category)
     session.commit()
     session.refresh(category)
     return category
+
+def service_create_sub_category(session:Session, sub_category:SubCategories) -> SubCategories:
+    existing_sub_category = session.exec(select(SubCategories).where(SubCategories.sub_category_name == sub_category.sub_category_name)).first()
+    if existing_sub_category:
+        raise HTTPException(status_code=404, detail="sub category is already present!")
+    session.add(sub_category)
+    session.commit()
+    session.refresh(sub_category)
+    return sub_category
+
+def service_create_order(session:Session, order:Order, user:User) -> Order:
+    """
+
+    """
+    existing_order = session.exec(select(Order).where(Order.order_id == order.order_id)).first()
+    if existing_order:
+        raise HTTPException(status_code=404, detail="order is already present!")
+    session.add(order)
+    session.commit()
+    session.refresh(order)
+    return order 
