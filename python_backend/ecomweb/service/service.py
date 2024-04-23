@@ -1,5 +1,6 @@
 from sqlmodel import select,Session
 from ecomweb.model.model import *
+from ecomweb.database.database import get_session
 from fastapi import HTTPException,Depends
 from fastapi.security import OAuth2PasswordBearer,OAuth2PasswordRequestForm
 from ecomweb.settings.setting import ACCESS_TOKEN_EXPIRE_MINUTES,ALGORITHM,SECRET_KEY
@@ -28,8 +29,7 @@ def service_signup(session:Session,user:User):
     """
     existing_user = session.exec(select(User).where(User.email == user.email)).first()
     if existing_user:
-        return None
-     
+        raise HTTPException(status_code=400, detail="Email already exists!")
     session.add(user)
     session.commit()
     session.refresh(user)
@@ -142,7 +142,7 @@ def authenticate_user(session:Session, username:str, password:str) -> User:
         return None
     return user
 
-def get_current_user(token:Annotated[str,Depends(oauth_scheme)],session:Session) -> User:
+def get_current_user(token:Annotated[str,Depends(oauth_scheme)],session:Session = Depends(get_session)) -> User:
     """
     This function is used to get the current user from a token.
 
@@ -302,3 +302,40 @@ def service_create_order(session:Session, order:Order, user:User) -> Order:
     session.commit()
     session.refresh(order)
     return order 
+
+def service_create_productsubcategoryassociation(session:Session,category_product_association:CategoryProductAssociation):
+    exesting_productcategoryassociation = session.exec(select(CategoryProductAssociation).where((CategoryProductAssociation.product_id == category_product_association.product_id) & (CategoryProductAssociation.sub_categories_id == category_product_association.sub_categories_id))).first()
+    if exesting_productcategoryassociation:
+        raise HTTPException(status_code=404, detail="product category association is already present!")
+    session.add(category_product_association)
+    session.commit()
+    session.refresh(category_product_association)
+    return category_product_association
+    
+
+def service_order_update(session:Session,order:OrderUpdate,user:User):
+    pass
+
+def get_order_by_id(session:Session, order_id:int) -> Order:
+    """
+
+    """
+    order = session.exec(select(Order).where(Order.order_id == order_id)).first()
+    if order is None:
+        raise HTTPException(status_code=404, detail="order not found!")
+    return order
+
+def service_delete_order(session:Session, order_id:int):
+    order = get_order_by_id(session, order_id)  
+    session.delete(order)
+    session.commit()
+    return {"message":"order deleted"}
+
+def service_create_order_item(session:Session, order_item:OrderItem):
+    existing_order_item = session.exec(select(OrderItem).where(OrderItem.order_id == order_item.order_id)).first()
+    if existing_order_item:
+        raise HTTPException(status_code=404, detail="order item is already present!")
+    session.add(order_item)
+    session.commit()
+    session.refresh(order_item)
+    return order_item

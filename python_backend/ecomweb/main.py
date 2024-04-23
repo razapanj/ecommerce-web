@@ -101,36 +101,65 @@ def get_image_for_product(session:Annotated[Session, Depends(get_session)], prod
 
 
 @app.post("/addproduct",response_model=ProductRead)
-def add_product(session:Annotated[Session, Depends(get_session)], product_data:ProductCreate):
+def add_product(session:Annotated[Session, Depends(get_session)], product_data:ProductCreate,user:Annotated[User,Depends(get_current_user)]):
     product_info = Product.model_validate(product_data)
     product = product_add(session, product_info)
     return product
 
 @app.get("/getproduct",response_model=ProductRead)
-def get_product_from_id(session:Annotated[Session, Depends(get_session)], product_id:int):
+def get_product_from_id(session:Annotated[Session, Depends(get_session)], product_id:int,user:Annotated[User,Depends(get_current_user)]):
     product = get_product_by_id(session,product_id)
     return product  
 
 @app.get("/getproducts",response_model=list[ProductRead])
-def get_products(session:Annotated[Session, Depends(get_session)]):
+def get_products(session:Annotated[Session, Depends(get_session)],user:Annotated[User,Depends(get_current_user)]):
     product = get_all_products(session)
     return product
 
 @app.post("/createcategory",response_model=CategoryRead)
-def create_category(session:Annotated[Session,Depends(get_session)],category_data:CategoryCreate):
+def create_category(session:Annotated[Session,Depends(get_session)],category_data:CategoryCreate,user:Annotated[User,Depends(get_current_user)]):
     category_info = Category.model_validate(category_data)
     category = service_create_category(session, category_info)
     return category
 
 @app.post("/addsubcategory",response_model=SubCategoryRead)
-def add_sub_category(session:Annotated[Session, Depends(get_session)],category_id:int, sub_category_data:SubCategoryCreate):
+def add_sub_category(session:Annotated[Session, Depends(get_session)], sub_category_data:SubCategoryCreate,user:Annotated[User,Depends(get_current_user)]):
     sub_category_info = SubCategories.model_validate(sub_category_data)
     sub_category = service_create_sub_category(session, sub_category_info)
     return sub_category
 
-@app.post("/createorder",response_model=OrderRead)
-def create_order(order_data:OrderCreate,session:Session = Depends(get_session),user:User = Depends(get_current_user)) -> OrderRead:
+
+@app.post("/productcategoryassociation",response_model=CategoryProductAssociation)
+def create_productsubcategoryassociation(session:Annotated[Session,Depends(get_session)],category_product_association_data:CategoryProductAssociation,user:Annotated[User,Depends(get_current_user)]) -> CategoryProductAssociation:
+    category_product_association_info = CategoryProductAssociation.model_validate(category_product_association_data)
+    category_product_association = service_create_productsubcategoryassociation(session, category_product_association_info) 
+    return category_product_association
+
+@app.post("/createorder")
+def create_order(order_data:OrderCreate,user:Annotated[User , Depends(get_current_user)],session:Annotated[Session, Depends(get_session)]) -> OrderRead:
     order_data.user_id = user.user_id
     order_info = Order.model_validate(order_data)
     order = service_create_order(session, order_info,user)
     return order
+
+@app.patch("/updateorder")
+def update_order(order_update:OrderUpdate,order_id, user:Annotated[User, Depends(get_current_user)], session:Annotated[Session, Depends(get_session)]) -> OrderRead:
+    order = get_order_by_id(session,order_id)
+    order_data = order_update.model_dump(exclude_unset = True)
+    order.sqlmodel_update(order_data)
+    session.add(order)
+    session.commit()
+    session.refresh(order)
+    return order 
+
+@app.delete("/deleteorder")
+def delete_order(order_id, user:Annotated[User, Depends(get_current_user)], session:Annotated[Session, Depends(get_session)]):
+    deleted_order = service_delete_order(session,order_id)
+    return deleted_order
+
+@app.post("/addorderitem")
+def add_order_item(order_item_data:OrderItemCreate, user:Annotated[User, Depends(get_current_user)], session:Annotated[Session, Depends(get_session)]) -> OrderItemRead:
+    order_item_info = OrderItem.model_validate(order_item_data)
+    order_item = service_create_order_item(session, order_item_info)
+    return order_item
+

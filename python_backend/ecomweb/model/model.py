@@ -70,16 +70,7 @@ class Size(str,Enum):
     EXTRALARGE:str = "extralarge"
     EXTRAEXTRALARGE:str = "extraextralarge"
 
-class Product(SQLModel,table=True):
-    product_id:int | None = Field(primary_key=True,default=None)
-    product_name:str = Field(index=True,unique=True)
-    product_description:str
-    product_price:int = Field(index=True)
-    product_slug:str = Field(index=True)
-    product_quantity:int
-    product_size:Size
-
-class ProductCreate(SQLModel):
+class ProductBase(SQLModel):
     product_name:str
     product_description:str
     product_price:int
@@ -87,7 +78,16 @@ class ProductCreate(SQLModel):
     product_quantity:int
     product_size:Size
 
-class ProductRead(Product):
+class Product(ProductBase,table=True):
+    product_id:int | None = Field(primary_key=True,default=None)
+    
+
+class ProductCreate(ProductBase):
+    pass
+
+
+
+class ProductRead(ProductBase):
     pass
 
     
@@ -108,29 +108,31 @@ class ImageRead(SQLModel):
     data:bytes
     product_id:int
 
-class Category(SQLModel,table=True):
-    category_id:int | None = Field(primary_key=True,default=None)
-    category_name:str = Field(index=True)
-    category_description:str
-    
-class CategoryCreate(SQLModel):
+class CategoryBase(SQLModel):
     category_name:str
     category_description:str
 
-class CategoryRead(Category):
+class Category(CategoryBase,table=True):
+    category_id:int | None = Field(primary_key=True,default=None)
+    
+class CategoryCreate(CategoryBase):
     pass
 
-class SubCategories(SQLModel,table=True):
-    sub_categories_id:int | None = Field(primary_key=True,default=None)
-    sub_category_name:str = Field(index =True)
-    category_id:int | None = Field(foreign_key="category.category_id",default=None)
+class CategoryRead(CategoryBase):
+    pass
 
-class SubCategoryCreate(SQLModel):
+class SubCategoriesBase(SQLModel):
     sub_category_name:str
 
-class SubCategoryRead(SubCategories):
-    pass
+class SubCategories(SubCategoriesBase,table=True):
+    sub_categories_id:int | None = Field(primary_key=True,default=None)
+    category_id:int | None = Field(foreign_key="category.category_id",default=None)
 
+class SubCategoryCreate(SubCategoriesBase):
+    category_id:int
+
+class SubCategoryRead(SubCategoriesBase):
+    pass
 
 
 class CategoryProductAssociation(SQLModel,table = True):
@@ -142,37 +144,43 @@ class OrderStatus(str,Enum):
     SUCCESS:str = "success"
     DELIVERED:str = "delivered"
 
-class Order(SQLModel,table = True):
+class OrderBase(SQLModel):
+    order_status:OrderStatus
+
+
+
+class Order(OrderBase,table = True):
     order_id:int | None = Field(primary_key=True,default=None)
     order_date:datetime = Field(default_factory=datetime.now)
-    order_status:OrderStatus
     user_id:int | None = Field(foreign_key="user.user_id")
 
-class OrderCreate(SQLModel):
-    order_status:OrderStatus
+class OrderCreate(OrderBase):
     user_id:int
-
-class OrderRead(Order):
+class OrderUpdate(OrderBase):
     pass
 
-class OrderItem(SQLModel,table = True):
-    order_item_id:int | None = Field(primary_key=True,default=None)
+class OrderRead(OrderBase):
+    order_date:datetime
+    user_id:int
+
+class OrderItemBase(SQLModel):
     order_quantity:int
     order_price:int
     order_subtotal:int
+    
+
+class OrderItem(OrderItemBase,table = True):
+    order_item_id:int | None = Field(primary_key=True,default=None)
     product_id:int | None = Field(foreign_key="product.product_id",default=None)
     order_id:int | None = Field(foreign_key="order.order_id",default=None)
 
-class OrderItemCreate(SQLModel):
-    order_quantity:int
-    order_price:int
-    order_subtotal:int
+class OrderItemCreate(OrderItemBase):
     product_id:int
     order_id:int
 
-class OrderItemRead(OrderItem):
-    pass
-
+class OrderItemRead(OrderItemBase):
+    product_id:int
+    order_id:int
 
 
 class Rating(int,Enum):
@@ -182,14 +190,16 @@ class Rating(int,Enum):
     FOUR_STAR:int = 4
     FIVE_STAR:int = 5
 
-
-class Review(SQLModel,table=True):
-    review_id:int | None = Field(primary_key=True,default=None)
+class ReviewBase(SQLModel):
     review_comment:str
+    review_rating:Rating
+
+class Review(ReviewBase,table=True):
+    review_id:int | None = Field(primary_key=True,default=None)
     review_date:datetime = Field(default_factory=datetime.now)
     product_id:int | None = Field(foreign_key="product.product_id",default=None)
     user_id:int | None = Field(foreign_key="user.user_id",default=None)
-    review_rating:Rating
+
 
 
 class Address(SQLModel):
