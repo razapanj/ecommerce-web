@@ -339,3 +339,10 @@ def service_create_order_item(session:Session, order_item:OrderItem):
     session.commit()
     session.refresh(order_item)
     return order_item
+
+def service_get_product_and_order(session:Session) -> list[Product]:
+    """
+
+    """
+    product_and_order = session.exec(select(OrderItem).join(Product).where(OrderItem.product_id == Product.product_id))
+    return product_and_order

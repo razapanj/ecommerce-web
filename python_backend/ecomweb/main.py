@@ -163,3 +163,9 @@ def add_order_item(order_item_data:OrderItemCreate, user:Annotated[User, Depends
     order_item = service_create_order_item(session, order_item_info)
     return order_item
 
+@app.get("/getorderandproduct")
+def get_order_and_product(session:Annotated[Session, Depends(get_session)]):
+    order_and_product = service_get_product_and_order(session)
+    for order in order_and_product:
+        return order
+    
