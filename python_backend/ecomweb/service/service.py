@@ -1,8 +1,9 @@
 from sqlmodel import select,Session
 from ecomweb.model.model import *
 from ecomweb.database.database import get_session
-from fastapi import HTTPException,Depends
+from fastapi import HTTPException,Depends,Response,Request
 from fastapi.security import OAuth2PasswordBearer,OAuth2PasswordRequestForm
+from fastapi.responses import RedirectResponse
 from ecomweb.settings.setting import ACCESS_TOKEN_EXPIRE_MINUTES,ALGORITHM,SECRET_KEY
 from jose import jwt,JWTError
 from passlib.context import CryptContext
@@ -167,6 +168,11 @@ def get_current_user(token:Annotated[str,Depends(oauth_scheme)],session:Session 
         raise credentials_exception
     return user
 
+def isadmin(user: User = Depends(get_current_user)):
+    if user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+    return user
+
 def create_access_token(data:dict, expires_delta:int | timedelta | None = None) -> str:
     """
     This function is used to create an access token.
@@ -234,6 +240,23 @@ def validate_refresh_token(session:Session,refresh_token:str) -> TokenData:
         raise credentials_exception
     return user
 
+def service_logout_user(session:Session,user_id:int,response:Response,request:Request):
+    user = get_user_by_id(session,user_id)
+    if not user:
+        return HTTPException(status_code=404,detail="User not found!")
+    access_token = request.cookies.get("access_token")
+    refresh_token = request.cookies.get("refresh_token")
+    tokens = [access_token,refresh_token]
+    for token in tokens:
+        if not token:
+            return HTTPException(status_code=404,detail="Token not found!")
+        
+    response.delete_cookie(key="access_token")
+    response.delete_cookie(key="refresh_token")
+     
+    return {"message":"succesfuly loggedout!"}
+    
+
 def get_product_by_id(session:Session,product_id:int) -> Product:
     """
     
@@ -250,11 +273,13 @@ def get_all_products(session:Session) -> list[Product]:
     products = session.exec(select(Product)).all()
     return products
 
-def product_add(session:Session, product:Product):
+def product_add(session:Session, product:Product,user:User):
     """
 
     """
     existing_product = session.exec(select(Product).where(Product.product_name == product.product_name)).first()
+    if user.role != "admin":
+        return HTTPException(status_code=401 , detail= "User is not admin!")
     if existing_product:
         raise HTTPException(status_code=404, detail="product is already present!")
     session.add(product)
@@ -262,13 +287,7 @@ def product_add(session:Session, product:Product):
     session.refresh(product)
     return product
 
-def get_image(session:Session, product_id:int) -> list[Image]:
-    """
 
-    """
-    images = session.exec(select(Image).where(Image.product_id == product_id)).all()
-    
-    return images
 
 def service_create_category(session:Session,category:Category) -> Category:
     """
@@ -282,41 +301,7 @@ def service_create_category(session:Session,category:Category) -> Category:
     session.refresh(category)
     return category
 
-def service_create_sub_category(session:Session, sub_category:SubCategories) -> SubCategories:
-    existing_sub_category = session.exec(select(SubCategories).where(SubCategories.sub_category_name == sub_category.sub_category_name)).first()
-    if existing_sub_category:
-        raise HTTPException(status_code=404, detail="sub category is already present!")
-    session.add(sub_category)
-    session.commit()
-    session.refresh(sub_category)
-    return sub_category
-
-def service_create_order(session:Session, order:Order, user:User) -> Order:
-    """
-
-    """
-    existing_order = session.exec(select(Order).where(Order.order_id == order.order_id)).first()
-    if existing_order:
-        raise HTTPException(status_code=404, detail="order is already present!")
-    session.add(order)
-    session.commit()
-    session.refresh(order)
-    return order 
-
-def service_create_productsubcategoryassociation(session:Session,category_product_association:CategoryProductAssociation):
-    exesting_productcategoryassociation = session.exec(select(CategoryProductAssociation).where((CategoryProductAssociation.product_id == category_product_association.product_id) & (CategoryProductAssociation.sub_categories_id == category_product_association.sub_categories_id))).first()
-    if exesting_productcategoryassociation:
-        raise HTTPException(status_code=404, detail="product category association is already present!")
-    session.add(category_product_association)
-    session.commit()
-    session.refresh(category_product_association)
-    return category_product_association
-    
-
-def service_order_update(session:Session,order:OrderUpdate,user:User):
-    pass
-
-def get_order_by_id(session:Session, order_id:int) -> Order:
+def service_get_order_by_id(session:Session, order_id:int) -> Order:
     """
 
     """
@@ -325,24 +310,153 @@ def get_order_by_id(session:Session, order_id:int) -> Order:
         raise HTTPException(status_code=404, detail="order not found!")
     return order
 
+def service_create_address(session:Session,address_data:Address,order_id:int,user:User):
+    order = service_get_order_by_id(session,order_id)
+    print(order)
+    if order:
+        
+        address = Address(order_id=order_id,user_id=user.user_id,address_name=address_data.address_name)
+        session.add(address)
+        session.commit()
+        session.refresh(address)
+    else:
+        raise HTTPException(status_code=404,detail = "Order does not exist")
+    return address
+
+def service_delete_address(session:Session,order_id:int):
+    address = session.exec(select(Address).where(Address.order_id == order_id)).first()
+    session.delete(address)
+    session.commit()
+    return {"message":"Address Deleted!"}
+
+def service_create_payment(session:Session,user:User,order_id:int,payment_data:Payment):
+    order = service_get_order_by_id(session,order_id)
+    if order:
+        payment = Payment(order_id=order_id,user_id=user.user_id,payment_method=payment_data.payment_method)
+        session.add(payment)
+        session.commit()
+        session.refresh(payment)
+    else:
+        raise HTTPException(status_code=404,detail="Order does not exist!")
+    return payment
+
+def service_delete_payment(session:Session,order_id:int):
+    payment = session.exec(select(Payment).where(Payment.order_id == order_id)).first()
+    session.delete(payment)
+    session.commit()
+    return {"message":"Payment Deleted!"}
+
+def service_create_order_item(session:Session,user:User,order_item_data:Cart,order_id:int):
+    orderitem = OrderItem(order_id=order_id,product_id=order_item_data.product_id,product_size=order_item_data.product_size,product_total=order_item_data.product_total,user_id=user.user_id,total_cart_products=order_item_data.total_cart_products)
+    session.add(orderitem)
+    session.commit()
+    session.refresh(orderitem)
+    return orderitem
+
+def service_delete_order_item(session:Session,order_id:int):
+    orderitems = session.exec(select(OrderItem).where(OrderItem.order_id == order_id)).all()
+    for orderitem in orderitems:
+        session.delete(orderitem)
+        session.commit()
+        return {"message":"Order item deleted!"}
+
+def service_create_order(session:Session, order:Order, user:User) -> Order:
+    """
+
+    """
+    existing_order = session.exec(select(Order).where(Order.order_id == order.order_id,Order.user_id == user.user_id)).first()
+    if existing_order:
+        raise HTTPException(status_code=404, detail="order is already present!")
+    carts = session.exec(select(Cart).where(Cart.user_id == user.user_id)).all()
+    if not carts:
+        raise HTTPException(status_code=404,detail="Cart is Empty!")
+    
+    order.user_id = user.user_id
+    session.add(order)
+    session.commit()
+    session.refresh(order)
+    carts:Cart = service_get_cart_from_user(session,user)
+    for cart in carts:
+        if order:
+            service_create_order_item(session,user,cart,order.order_id)
+    
+    for cart in carts:
+        session.delete(cart)
+        session.commit()  
+    return order 
+    
+
+
+
+def service_create_productsubcategoryassociation(session:Session,category_product_association:CategoryProductAssociation):
+    exesting_productcategoryassociation = session.exec(select(CategoryProductAssociation).where((CategoryProductAssociation.product_id == category_product_association.product_id) & (CategoryProductAssociation.category_id == category_product_association.category_id))).first()
+    if exesting_productcategoryassociation:
+        raise HTTPException(status_code=404, detail="product category association is already present!")
+    session.add(category_product_association)
+    session.commit()
+    session.refresh(category_product_association)
+    return category_product_association
+    
+def service_get_product_from_category(session:Session,category_id:int):
+    product_category_data = session.exec(select(Product).join(CategoryProductAssociation).where(CategoryProductAssociation.category_id == category_id))
+    return product_category_data
+
 def service_delete_order(session:Session, order_id:int):
-    order = get_order_by_id(session, order_id)  
+    order = service_get_order_by_id(session, order_id)  
     session.delete(order)
     session.commit()
     return {"message":"order deleted"}
 
-def service_create_order_item(session:Session, order_item:OrderItem):
-    existing_order_item = session.exec(select(OrderItem).where(OrderItem.order_id == order_item.order_id)).first()
-    if existing_order_item:
-        raise HTTPException(status_code=404, detail="order item is already present!")
-    session.add(order_item)
+def service_order_update(session:Session,user:User,order_id:int):
+    order = service_get_order_by_id(session,order_id)
+    if order.order_status == "cancelled":
+        service_delete_address(session,order_id)
+        service_delete_payment(session,order_id)
+        service_delete_order_item(session,order_id)
+        service_delete_order(session,order_id)
+        return {"message":"Order is cancelled"}
+    elif order.order_status == "delivered":
+        service_delete_address(session,order_id)
+        service_delete_payment(session,order_id)
+        service_delete_order_item(session,order_id)
+        service_delete_order(session,order_id)
+        return {"message":"Order is delivered"}
+    
+    return order
+
+
+def service_add_same_product_to_cart(session:Session,user:User,cart_updated_data:Cart):
+    cart_row = session.exec(select(Cart).where(Cart.user_id == user.user_id,Cart.product_id == cart_updated_data.product_id,Cart.product_size == cart_updated_data.product_size)).first()
+    product:Product = session.exec(select(Product).where(Product.product_id == cart_updated_data.product_id)).first() 
+    if cart_row:
+        cart_row.total_cart_products += cart_updated_data.total_cart_products 
+        cart_row.product_total = cart_row.total_cart_products * product.product_price
+        session.add(cart_row)
+        session.commit()
+        return cart_row
+
+def service_add_to_cart(session:Session,cart_data:Cart,user:User,product_id:int):
+    
+    if not user:
+        raise HTTPException(status_code=401,detail="User not found!")
+    
+    cart_data.user_id = user.user_id
+    cart_data.product_id = product_id
+    cart = session.exec(select(Cart).where(Cart.user_id == user.user_id,Cart.product_id == product_id, Cart.product_size == cart_data.product_size)).first()
+    if cart:
+        return service_add_same_product_to_cart(session,user,cart_data)
+    session.add(cart_data)
     session.commit()
-    session.refresh(order_item)
-    return order_item
+    session.refresh(cart_data)
 
-def service_get_product_and_order(session:Session) -> list[Product]:
-    """
 
-    """
-    product_and_order = session.exec(select(OrderItem).join(Product).where(OrderItem.product_id == Product.product_id))
-    return product_and_order
+    return cart_data
+
+def service_get_product_from_cart(session:Session,user:User):
+    product_from_cart = session.exec(select(Product).join(Cart).where(Cart.user_id == user.user_id))
+    return product_from_cart
+
+
+def service_get_cart_from_user(session:Session,user:User):
+    carts = session.exec(select(Cart).where(Cart.user_id == user.user_id)).all()
+    return carts

@@ -19,8 +19,6 @@ class UserCreate(UserBase):
     email:str
     confirm_password:str
 
-    
-
 class User(UserBase, table = True):
     user_id:int | None = Field(primary_key=True, default=None)
     firstname:str = Field(nullable=False)
@@ -67,17 +65,14 @@ class Size(str,Enum):
     LARGE:str = "large"
     SMALL:str = "small"
     MEDIUM:str = "medium"
-    EXTRALARGE:str = "extralarge"
-    EXTRAEXTRALARGE:str = "extraextralarge"
 
 class ProductBase(SQLModel):
     product_name:str
     product_description:str
     product_price:int
     product_slug:str
-    product_quantity:int
-    product_size:Size
-
+    
+    
 class Product(ProductBase,table=True):
     product_id:int | None = Field(primary_key=True,default=None)
     
@@ -90,23 +85,27 @@ class ProductCreate(ProductBase):
 class ProductRead(ProductBase):
     pass
 
-    
+class CartBase(SQLModel):
+    total_cart_products:int
+    product_total:int
+    product_size:Size
 
-class ProductCart(SQLModel,table = True):
-    cart_product_id:int | None = Field(primary_key=True,default=None)
+class Cart(CartBase,table = True):
+    cart_id:int | None = Field(primary_key=True,default=None)
     user_id:int | None = Field(foreign_key="user.user_id",default=None)
     product_id:int | None = Field(foreign_key="product.product_id",default=None) 
 
-class Image(SQLModel,table=True):
-    image_id:int | None = Field(primary_key=True,default=None)
-    file_name:str
-    data:bytes 
-    product_id:int | None = Field(foreign_key="product.product_id",index=True,default=None)
+class CartCreate(CartBase):
+    pass    
 
-class ImageRead(SQLModel):
-    file_name:str
-    data:bytes
+class CartUpdate(CartBase):
+    pass
+
+class CartRead(CartBase):
+    cart_id:int
+    user_id:int
     product_id:int
+
 
 class CategoryBase(SQLModel):
     category_name:str
@@ -114,74 +113,44 @@ class CategoryBase(SQLModel):
 
 class Category(CategoryBase,table=True):
     category_id:int | None = Field(primary_key=True,default=None)
-    
+
 class CategoryCreate(CategoryBase):
     pass
 
 class CategoryRead(CategoryBase):
     pass
 
-class SubCategoriesBase(SQLModel):
-    sub_category_name:str
 
-class SubCategories(SubCategoriesBase,table=True):
-    sub_categories_id:int | None = Field(primary_key=True,default=None)
-    category_id:int | None = Field(foreign_key="category.category_id",default=None)
-
-class SubCategoryCreate(SubCategoriesBase):
-    category_id:int
-
-class SubCategoryRead(SubCategoriesBase):
-    pass
 
 
 class CategoryProductAssociation(SQLModel,table = True):
-    sub_categories_id:int | None = Field(primary_key=True,foreign_key="subcategories.sub_categories_id",default=None)
+    category_id:int | None = Field(primary_key=True,foreign_key="category.category_id",default=None)
     product_id:int | None = Field(primary_key=True,foreign_key="product.product_id",default=None) 
 
 class OrderStatus(str,Enum):
     PENDING:str = "pending"
-    SUCCESS:str = "success"
+    CANCELLED:str = "cancelled"
     DELIVERED:str = "delivered"
 
 class OrderBase(SQLModel):
     order_status:OrderStatus
-
+    customer_name:str
+    customer_email:str
 
 
 class Order(OrderBase,table = True):
     order_id:int | None = Field(primary_key=True,default=None)
-    order_date:datetime = Field(default_factory=datetime.now)
-    user_id:int | None = Field(foreign_key="user.user_id")
+    user_id:int | None = Field(foreign_key="user.user_id",default=None)
 
 class OrderCreate(OrderBase):
-    user_id:int
-class OrderUpdate(OrderBase):
     pass
 
+class OrderUpdate(SQLModel):
+    order_status:OrderStatus
+
 class OrderRead(OrderBase):
-    order_date:datetime
-    user_id:int
-
-class OrderItemBase(SQLModel):
-    order_quantity:int
-    order_price:int
-    order_subtotal:int
+    pass
     
-
-class OrderItem(OrderItemBase,table = True):
-    order_item_id:int | None = Field(primary_key=True,default=None)
-    product_id:int | None = Field(foreign_key="product.product_id",default=None)
-    order_id:int | None = Field(foreign_key="order.order_id",default=None)
-
-class OrderItemCreate(OrderItemBase):
-    product_id:int
-    order_id:int
-
-class OrderItemRead(OrderItemBase):
-    product_id:int
-    order_id:int
-
 
 class Rating(int,Enum):
     ONE_STAR:int = 1
@@ -201,22 +170,45 @@ class Review(ReviewBase,table=True):
     user_id:int | None = Field(foreign_key="user.user_id",default=None)
 
 
+class AddressBase(SQLModel):
+    address_name :str
 
-class Address(SQLModel):
+
+class Address(AddressBase,table = True):
     address_id:int | None = Field(primary_key=True,default=None)
-    address_name :str = Field(index=True)
     user_id:int | None = Field(foreign_key="user.user_id",default=None)
     order_id:int | None = Field(foreign_key="order.order_id",default=None)
+
+class AddressCreate(AddressBase):
+    pass
+
+class OrderItemBase(SQLModel):
+    total_cart_products:int
+    product_total:int
+    product_size:Size
+
+class OrderItem(OrderItemBase,table =True):
+    orderitem_id:int | None = Field(primary_key=True,default=None)
+    order_id:int | None = Field(foreign_key="order.order_id",default=None)
+    user_id:int | None = Field(foreign_key="user.user_id",default=None)
+    product_id:int | None = Field(foreign_key="product.product_id",default=None)
+
+class OrderItemCreate(OrderBase):
+    pass
 
 class PaymentMethod(str,Enum):
     COD:str = "cash on delivery"
 
-class Payment(SQLModel,table = True):
-    payment_id:int | None = Field(primary_key=True,default=None)
+class PaymentBase(SQLModel):
     payment_method:PaymentMethod
-    order_id:int | None = Field(foreign_key="order.order_id",default=None)
-    user_id:int | None = Field(foreign_key="user.user_id",default=None)
 
+class Payment(PaymentBase,table = True):
+    payment_id:int | None = Field(primary_key=True,default=None)
+    user_id:int | None = Field(foreign_key="user.user_id",default=None)
+    order_id:int | None = Field(foreign_key="order.order_id",default=None)
+
+class PaymentCreate(PaymentBase):
+    pass
 
 class Token(SQLModel):
     access_token:str
