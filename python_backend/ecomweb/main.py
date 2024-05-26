@@ -1,4 +1,5 @@
 from fastapi import FastAPI,Depends,UploadFile,File,Request,Response
+from fastapi.middleware.cors import CORSMiddleware
 from ecomweb.database.database import create_all_tables,get_session 
 from ecomweb.model.model import *
 from ecomweb.service.service import *
@@ -17,8 +18,15 @@ async def lifespan(app: FastAPI):
     
 app = FastAPI(lifespan=lifespan,title="ecommerce api with sqlmodel",version="0.1.0")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-@app.post("/signup",response_model=UserRead)
+@app.post("/api/signup",response_model=UserRead)
 def signup_users(session:Annotated[Session,Depends(get_session)],user_data:UserCreate) -> User:
     """
         This function is used to signup a new user.
@@ -136,7 +144,7 @@ def create_order(order_data:OrderCreate,address_data:AddressCreate,payment_data:
     return order
 
 @app.patch("/updateorder")
-def update_order(order_update:OrderUpdate,order_id, user:Annotated[User, Depends(get_current_user)], session:Annotated[Session, Depends(get_session)]) -> OrderRead:
+def update_order(order_update:OrderUpdate,order_id, user:Annotated[User, Depends(get_current_user)], session:Annotated[Session, Depends(get_session)]):
     order = service_get_order_by_id(session,order_id)
     if order:
         order_data = order_update.model_dump(exclude_unset = True)

@@ -357,8 +357,8 @@ def service_delete_order_item(session:Session,order_id:int):
     orderitems = session.exec(select(OrderItem).where(OrderItem.order_id == order_id)).all()
     for orderitem in orderitems:
         session.delete(orderitem)
-        session.commit()
-        return {"message":"Order item deleted!"}
+    session.commit()
+    return {"message":"Order item deleted!"}
 
 def service_create_order(session:Session, order:Order, user:User) -> Order:
     """
@@ -422,7 +422,7 @@ def service_order_update(session:Session,user:User,order_id:int):
         service_delete_order(session,order_id)
         return {"message":"Order is delivered"}
     
-    return order
+    # return order
 
 
 def service_add_same_product_to_cart(session:Session,user:User,cart_updated_data:Cart):
