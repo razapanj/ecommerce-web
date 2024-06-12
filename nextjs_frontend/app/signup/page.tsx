@@ -23,11 +23,14 @@ const Signup = () => {
 
     const handleSignUp = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault()
-        signUp(userInfo)
+        const actionSignUp = await signUp(userInfo)
+        console.log(actionSignUp);
+
     }
 
     return (
         <>
+            <h1 className="uppercase">Sign up </h1>
             <Signupform username={username} email={email} firstname={firstname} lastname={lastname} password={password} confirm_password={confirm_password} role={role} setUsername={setUsername} setEmail={setEmail} setFirstName={setFirstName} setLastName={setLastName} setPassword={setPassword} setConfirmPassword={setConfirmPassword} setRole={setRole} onsubmit={handleSignUp} />
         </>
     )

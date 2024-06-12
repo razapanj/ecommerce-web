@@ -25,13 +25,13 @@ const Signupform = (props: UserProps) => {
     return (
         <>
             <form action="" onSubmit={(event) => { onsubmit(event) }}>
-                <input type="text" name="username" id="" value={username} onChange={(e) => { setUsername(e.target.value) }} />
-                <input type="email" name="email" id="" value={email} onChange={(e) => { setEmail(e.target.value) }} />
-                <input type="text" name="firstName" id="" value={firstname} onChange={(e) => { setFirstName(e.target.value) }} />
-                <input type="text" name="lastName" id="" value={lastname} onChange={(e) => { setLastName(e.target.value) }} />
-                <input type="password" name="password" id="" value={password} onChange={(e) => { setPassword(e.target.value) }} />
-                <input type="password" name="confirmpassword" id="" value={confirm_password} onChange={(e) => { setConfirmPassword(e.target.value) }} />
-                <input type="checkbox" name="role" id="" value={role.user} />
+                <input type="text" name="username" value={username} onChange={(e) => { setUsername(e.target.value) }} />
+                <input type="email" name="email" value={email} onChange={(e) => { setEmail(e.target.value) }} />
+                <input type="text" name="firstName" value={firstname} onChange={(e) => { setFirstName(e.target.value) }} />
+                <input type="text" name="lastName" value={lastname} onChange={(e) => { setLastName(e.target.value) }} />
+                <input type="password" name="password" value={password} onChange={(e) => { setPassword(e.target.value) }} />
+                <input type="password" name="confirmpassword" value={confirm_password} onChange={(e) => { setConfirmPassword(e.target.value) }} />
+                <input type="checkbox" name="role" value={role.user} />
                 <button type="submit">submit</button>
 
             </form>

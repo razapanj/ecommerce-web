@@ -11,12 +11,10 @@ export const signUp = async (user_data: User): Promise<any> => {
             })
             if (user.ok) {
                 const user_response: UserResponse = await user.json()
-                return { "message": "You have been Signup successfully" }
                 console.log(user_response);
+                return { "message": "You have been Signup successfully" }
             }
         }
-
-
     } catch (error) {
         console.error(error)
     }
