@@ -1,7 +1,0 @@
-FROM python:3.12
-WORKDIR /code
-ADD . /code/
-ADD ./ecomweb /code/ecomweb/
-RUN pip install poetry
-RUN poetry install
-ENTRYPOINT [ "poetry", "run", "uvicorn" , "ecomweb.main:app" ,"--reload"]
