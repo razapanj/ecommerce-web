@@ -43,7 +43,7 @@ def signup_users(session:Annotated[Session,Depends(get_session)],user_data:UserC
     user = User.model_validate(user_data)
     return service_signup(session,user)
 
-@app.post("/login",response_model=Token)
+@app.post("/api/login",response_model=Token)
 def login_user(request:Response,session:Annotated[Session,Depends(get_session)],form_data:OAuth2PasswordRequestForm = Depends()):
     """
         This function is used to login a user.

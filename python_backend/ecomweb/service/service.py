@@ -14,7 +14,7 @@ pwd_context = CryptContext(schemes=['bcrypt'], deprecated="auto")
 SECRET_KEYY = str(SECRET_KEY)
 ALGORITHMM = str(ALGORITHM)
 
-oauth_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+oauth_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
 
 def service_signup(session:Session,user:User):
     """

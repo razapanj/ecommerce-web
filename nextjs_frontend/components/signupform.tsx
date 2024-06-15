@@ -24,16 +24,26 @@ const Signupform = (props: UserProps) => {
 
     return (
         <>
-            <form action="" onSubmit={(event) => { onsubmit(event) }}>
-                <input type="text" name="username" value={username} onChange={(e) => { setUsername(e.target.value) }} />
-                <input type="email" name="email" value={email} onChange={(e) => { setEmail(e.target.value) }} />
-                <input type="text" name="firstName" value={firstname} onChange={(e) => { setFirstName(e.target.value) }} />
-                <input type="text" name="lastName" value={lastname} onChange={(e) => { setLastName(e.target.value) }} />
-                <input type="password" name="password" value={password} onChange={(e) => { setPassword(e.target.value) }} />
-                <input type="password" name="confirmpassword" value={confirm_password} onChange={(e) => { setConfirmPassword(e.target.value) }} />
-                <input type="checkbox" name="role" value={role.user} />
-                <button type="submit">submit</button>
-
+            <form action="" onSubmit={(event) => { onsubmit(event) }} className="flex flex-col gap-2 ">
+                <label htmlFor="username">USERNAME</label>
+                <input className="outline-none rounded-md text-black p-1" type="text" name="username" id="username" value={username} onChange={(e) => { setUsername(e.target.value) }} />
+                <label htmlFor="email">EMAIL</label>
+                <input className="outline-none rounded-md text-black p-1" type="email" name="email" id="email" value={email} onChange={(e) => { setEmail(e.target.value) }} />
+                <label htmlFor="firstname">FIRSTNAME</label>
+                <input className="outline-none rounded-md text-black p-1" type="text" id="firstname" name="firstName" value={firstname} onChange={(e) => { setFirstName(e.target.value) }} />
+                <label htmlFor="lastname">LASTNAME</label>
+                <input className="outline-none rounded-md text-black p-1" type="text" name="lastName" id="lastname" value={lastname} onChange={(e) => { setLastName(e.target.value) }} />
+                <label htmlFor="password">PASSWORD</label>
+                <input className="outline-none rounded-md text-black p-1" type="password" id="password" name="password" value={password} onChange={(e) => { setPassword(e.target.value) }} />
+                <label htmlFor="confirmpassword">CONFIRMPASSWORD</label>
+                <input className="outline-none rounded-md text-black p-1" type="password" name="confirmpassword" value={confirm_password} onChange={(e) => { setConfirmPassword(e.target.value) }} />
+                <div className="flex justify-center gap-3">
+                    <label htmlFor="admin">ADMIN</label>
+                    <input className="outline-none rounded-md text-black p-1" type="checkbox" id="admin" name="role" value={role.user} />
+                    <label htmlFor="user">USER</label>
+                    <input className="outline-none rounded-md text-black p-1" type="checkbox" name="role" id="user" value={role.user} />
+                </div>
+                <button type="submit" className="uppercase text-xl mt-2 bg-[#87CEEB] flex justify-center p-1.5 rounded-lg">submit</button>
             </form>
         </>
     )
